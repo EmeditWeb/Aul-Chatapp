@@ -10,9 +10,9 @@ A Chat Application created with react and node.js
 
 # Host
 My React-app is hosted on netlify
-- [View Site](aul-chatapp.netlify.com)
+- [View Site](https://aul-chatapp.netlify.com)
 
 # Developer
-- EmeditWeb - Frontend and Codebase [EmeditWeb](github.com/emeditweb)
+- EmeditWeb - Frontend and Codebase [EmeditWeb](https://github.com/emeditweb)
 
-- Julirash - Online Hosting Idea [Julirash](github.com/julirash)
+- Julirash - Online Hosting Idea [Julirash](https://github.com/julirash)

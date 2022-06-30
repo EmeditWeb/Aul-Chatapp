@@ -8,10 +8,10 @@ const App = () => {
     if (!localStorage.getItem('username')) return <LoginForm />;
     return (
         <ChatEngine 
-        height="100vh" 
-        projectID="0f1a093e-1f56-4042-b06b-cf453e31cb6a"
-        userName={localStorage.getItem('username')}
-        userSecret={localStorage.getItem('password')}
+        height='100vh'
+			userName='Emedit'
+			userSecret='iamme'
+			projectID='0f1a093e-1f56-4042-b06b-cf453e31cb6a'
         renderChatFeed={(chatAppProps) => <ChatFeed { ... chatAppProps} /> }
         
         />

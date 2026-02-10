@@ -122,7 +122,7 @@ const Onboarding = () => {
             className="input"
             required
           />
-          <div align="center">
+          <div style={{ textAlign: 'center' }}>
             <button type="submit" className="button" disabled={loading}>
               <span>{loading ? 'Setting up...' : 'Start Chatting'}</span>
             </button>

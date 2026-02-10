@@ -5,8 +5,8 @@
 A Chat Application created with react and node.js
 
 # Login Details
-- Username: Bella
-- Password: bella12
+- Username: <your_username>
+- Password: <your_password>
 
 # Host
 My React-app is hosted on netlify

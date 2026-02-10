@@ -1,52 +1,64 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { GoogleOutlined, GithubOutlined } from '@ant-design/icons';
+import { auth, db } from '../firebase';
+import { GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
-const projectID="c3e79e01-d8f0-4735-a0e7-aa97f88c8b26";
-
-const Modal = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+const LoginForm = () => {
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const authObject = { 'Project-ID': projectID, 'User-Name': username, 'User-Secret': password };
-
+  const handleSocialLogin = async (provider) => {
     try {
-      await axios.get('https://api.chatengine.io/chats', { headers: authObject });
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
 
-      localStorage.setItem('username', username);
-      localStorage.setItem('password', password);
+      // Check if user exists in Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
 
-      window.location.reload();
-      setError('');
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        localStorage.setItem('username', userData.username);
+        localStorage.setItem('password', user.uid);
+
+        // Navigate to home
+        navigate('/');
+      } else {
+        // New user -> Onboarding
+        navigate('/onboarding');
+      }
+
     } catch (err) {
-      setError('Oops, incorrect credentials.🙄');
+      console.error(err);
+      setError('Failed to sign in. ' + err.message);
     }
   };
 
   return (
     <div className="wrapper">
       <div className="form">
-        <h1 className="title">AUL ChatApp</h1>
-        <center><h3 className="error">{error}</h3></center><br/>
-        <form onSubmit={handleSubmit}>
-          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="input" placeholder="Username" required />
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" placeholder="Password" required />
-          <div align="center">
-            <button type="submit" className="button">
-              <span>Enter ChatRoom</span>
-            </button>
-          </div>
-        </form><br/>
-        <center><h5>Meet the <a href="https://github.com/EmeditWeb" target='_blank' rel="noreferrer">Developer</a></h5></center>
-        
+        <h1 className="title">Chat Application</h1>
+        <div align="center">
+          <button
+            onClick={() => handleSocialLogin(new GoogleAuthProvider())}
+            className="button"
+            style={{ marginBottom: '10px', backgroundColor: '#db4437', display: 'block', width: '100%' }}
+          >
+            <GoogleOutlined style={{ marginRight: '8px' }} /> Sign in with Google
+          </button>
+          <button
+            onClick={() => handleSocialLogin(new GithubAuthProvider())}
+            className="button"
+            style={{ backgroundColor: '#333', display: 'block', width: '100%' }}
+          >
+            <GithubOutlined style={{ marginRight: '8px' }} /> Sign in with GitHub
+          </button>
         </div>
-        
+        <center><h3 className="error">{error}</h3></center>
+      </div>
     </div>
-    
   );
 };
 
-export default Modal;
+export default LoginForm;

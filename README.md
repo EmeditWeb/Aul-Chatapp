@@ -92,6 +92,25 @@ npm run build
 
 This creates a `build` folder with optimized static files.
 
+### Deploying to Netlify
+
+1.  **Fork this repository** to your GitHub account if you haven't already.
+2.  Log in to [Netlify](https://www.netlify.com/).
+3.  Click "New site from Git".
+4.  Choose GitHub and authorize Netlify.
+5.  Select your repository.
+6.  **Build settings** should be auto-detected (or set manually):
+    -   **Base directory**: `/` (root)
+    -   **Build command**: `npm run build`
+    -   **Publish directory**: `build/`
+7.  **Environment Variables**:
+    -   Click "Show advanced" or go to "Site settings > Build & deploy > Environment".
+    -   Add all the `REACT_APP_...` variables from your `.env` file.
+    -   **Important**: Without these variables, the app will fail to load or connect to services.
+8.  Click "Deploy site".
+
+*Note: A `_redirects` file is included in `public/` to handle client-side routing, ensuring pages like `/login` work on refresh.*
+
 ## Project Structure
 
 -   `src/component`: React components (ChatFeed, LoginForm, Onboarding, etc.).

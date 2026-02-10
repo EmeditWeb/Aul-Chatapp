@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-const projectID="c3e79e01-d8f0-4735-a0e7-aa97f88c8b26";
+const projectID = process.env.REACT_APP_PROJECT_ID;
 
 const Modal = () => {
   const [username, setUsername] = useState('');
@@ -41,11 +41,11 @@ const Modal = () => {
           </div>
         </form><br/>
         <center><h5>Meet the <a href="https://github.com/EmeditWeb" target='_blank' rel="noreferrer">Developer</a></h5></center>
-        
+
         </div>
-        
+
     </div>
-    
+
   );
 };
 

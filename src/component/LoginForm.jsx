@@ -30,17 +30,17 @@ const Modal = () => {
     <div className="wrapper">
       <div className="form">
         <h1 className="title">AUL ChatApp</h1>
-        <center><h3 className="error">{error}</h3></center><br/>
+        <h3 className="error" style={{ textAlign: 'center' }}>{error}</h3><br/>
         <form onSubmit={handleSubmit}>
           <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="input" placeholder="Username" required />
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" placeholder="Password" required />
-          <div align="center">
+          <div style={{ textAlign: 'center' }}>
             <button type="submit" className="button">
               <span>Enter ChatRoom</span>
             </button>
           </div>
         </form><br/>
-        <center><h5>Meet the <a href="https://github.com/EmeditWeb" target='_blank' rel="noreferrer">Developer</a></h5></center>
+        <h5 style={{ textAlign: 'center' }}>Meet the <a href="https://github.com/EmeditWeb" target='_blank' rel="noreferrer">Developer</a></h5>
         
         </div>
         

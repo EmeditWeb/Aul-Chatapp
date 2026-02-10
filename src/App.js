@@ -11,8 +11,10 @@ import { ThemeProvider } from './contexts/ThemeContext';
 
 import './App.css';
 
+const renderChatFeed = (chatAppProps) => <ChatFeed {...chatAppProps} />;
+
 const ChatScreen = () => {
-  const projectID = process.env.REACT_APP_CHAT_ENGINE_PROJECT_ID || '0f1a093e-1f56-4042-b06b-cf453e31cb6a';
+  const projectID = process.env.REACT_APP_CHAT_ENGINE_PROJECT_ID;
   const username = localStorage.getItem('username');
   const secret = localStorage.getItem('password');
 
@@ -24,7 +26,7 @@ const ChatScreen = () => {
       projectID={projectID}
       userName={username}
       userSecret={secret}
-      renderChatFeed={(chatAppProps) => <ChatFeed {...chatAppProps} />}
+      renderChatFeed={renderChatFeed}
     />
   );
 };

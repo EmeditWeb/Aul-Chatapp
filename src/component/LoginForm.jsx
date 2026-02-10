@@ -39,7 +39,7 @@ const LoginForm = () => {
     <div className="wrapper">
       <div className="form">
         <h1 className="title">Chat Application</h1>
-        <div align="center">
+        <div style={{ textAlign: 'center' }}>
           <button
             onClick={() => handleSocialLogin(new GoogleAuthProvider())}
             className="button"
@@ -55,7 +55,7 @@ const LoginForm = () => {
             <GithubOutlined style={{ marginRight: '8px' }} /> Sign in with GitHub
           </button>
         </div>
-        <center><h3 className="error">{error}</h3></center>
+        <div style={{ textAlign: 'center' }}><h3 className="error">{error}</h3></div>
       </div>
     </div>
   );

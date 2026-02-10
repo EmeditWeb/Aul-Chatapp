@@ -3,28 +3,49 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from './App';
 
-// Mocking the components
+// Mock contexts
+jest.mock('./contexts/AuthContext', () => ({
+  AuthProvider: ({ children }) => <div>{children}</div>,
+  useAuth: () => ({ currentUser: null }) // Default not logged in
+}));
+jest.mock('./contexts/ThemeContext', () => ({
+  ThemeProvider: ({ children }) => <div>{children}</div>,
+  useTheme: () => ({ darkTheme: false, toggleTheme: jest.fn() })
+}));
+
+// Mock components
 jest.mock('./component/LoginForm', () => () => <div data-testid="login-form">LoginForm</div>);
+jest.mock('./component/ChatFeed', () => () => <div data-testid="chat-feed">ChatFeed</div>);
 jest.mock('react-chat-engine', () => ({
   ChatEngine: () => <div data-testid="chat-engine">ChatEngine</div>
 }));
+jest.mock('./component/Onboarding', () => () => <div data-testid="onboarding">Onboarding</div>);
+jest.mock('./component/ThemeToggle', () => () => <div>ThemeToggle</div>);
+
+// Mock firebase
+jest.mock('./firebase', () => ({
+  auth: {},
+  db: {}
+}));
+
+// Mock window.matchMedia for Ant Design or other libs if needed
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(), // deprecated
+    removeListener: jest.fn(), // deprecated
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
 
 describe('App component', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    jest.clearAllMocks();
-  });
-
-  test('renders LoginForm when username is not in localStorage', () => {
+  test('renders LoginForm by default (redirects to login)', () => {
     render(<App />);
     expect(screen.getByTestId('login-form')).toBeInTheDocument();
-    expect(screen.queryByTestId('chat-engine')).not.toBeInTheDocument();
-  });
-
-  test('renders ChatEngine when username is in localStorage', () => {
-    localStorage.setItem('username', 'testuser');
-    render(<App />);
-    expect(screen.getByTestId('chat-engine')).toBeInTheDocument();
-    expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
   });
 });

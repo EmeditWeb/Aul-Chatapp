@@ -22,10 +22,19 @@ jest.mock('react-chat-engine', () => ({
 jest.mock('./component/Onboarding', () => () => <div data-testid="onboarding">Onboarding</div>);
 jest.mock('./component/ThemeToggle', () => () => <div>ThemeToggle</div>);
 
-// Mock firebase
-jest.mock('./firebase', () => ({
-  auth: {},
-  db: {}
+// Mock Supabase
+jest.mock('./supabaseClient', () => ({
+  supabase: {
+    auth: {
+      onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
+      getSession: jest.fn(() => Promise.resolve({ data: { session: null } })),
+    },
+    from: jest.fn(() => ({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn(() => Promise.resolve({ data: null, error: null }))
+    }))
+  }
 }));
 
 // Mock window.matchMedia for Ant Design or other libs if needed

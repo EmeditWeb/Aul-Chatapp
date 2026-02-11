@@ -1,6 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { auth } from "../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { supabase } from "../supabaseClient";
 
 const AuthContext = React.createContext();
 
@@ -13,16 +12,45 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
+    let mounted = true;
+
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted) {
+        setCurrentUser(session?.user ?? null);
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (mounted) setLoading(false);
     });
 
-    return unsubscribe;
+    // Timeout fallback to ensure UI loads even if auth checks hang
+    setTimeout(() => {
+        if (mounted) setLoading(false);
+    }, 2000);
+
+    // Listen for changes on auth state
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setCurrentUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('username');
+    localStorage.removeItem('password');
+  }
 
   const value = {
     currentUser,
+    logout
   };
 
   return (

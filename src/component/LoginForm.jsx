@@ -1,37 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GoogleOutlined, GithubOutlined } from '@ant-design/icons';
-import { auth, db } from '../firebase';
-import { GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { supabase } from '../supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  const handleSocialLogin = async (provider) => {
+  useEffect(() => {
+    if (currentUser) {
+      navigate('/');
+    }
+  }, [currentUser, navigate]);
+
+  const handleLogin = async (provider) => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      // Check if user exists in Firestore
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        localStorage.setItem('username', userData.username);
-        localStorage.setItem('password', user.uid);
-
-        // Navigate to home
-        navigate('/');
-      } else {
-        // New user -> Onboarding
-        navigate('/onboarding');
-      }
-
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
     } catch (err) {
       console.error(err);
       setError('Failed to sign in. ' + err.message);
+      setLoading(false);
     }
   };
 
@@ -41,15 +39,17 @@ const LoginForm = () => {
         <h1 className="title">Chat Application</h1>
         <div style={{ textAlign: 'center' }}>
           <button
-            onClick={() => handleSocialLogin(new GoogleAuthProvider())}
+            onClick={() => handleLogin('google')}
             className="button"
+            disabled={loading}
             style={{ marginBottom: '10px', backgroundColor: '#db4437', display: 'block', width: '100%' }}
           >
             <GoogleOutlined style={{ marginRight: '8px' }} /> Sign in with Google
           </button>
           <button
-            onClick={() => handleSocialLogin(new GithubAuthProvider())}
+            onClick={() => handleLogin('github')}
             className="button"
+            disabled={loading}
             style={{ backgroundColor: '#333', display: 'block', width: '100%' }}
           >
             <GithubOutlined style={{ marginRight: '8px' }} /> Sign in with GitHub

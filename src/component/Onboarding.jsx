@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { db, storage } from '../firebase';
-import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -31,65 +29,71 @@ const Onboarding = () => {
       setError('');
 
       // 0. Check for username uniqueness
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("username", "==", username));
-      const querySnapshot = await getDocs(q);
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
 
-      if (!querySnapshot.empty) {
+      if (checkError) throw checkError;
+      if (existingUser) {
         throw new Error("Username already taken. Please choose another.");
       }
 
       // 1. Upload Profile Pic
-      const storageRef = ref(storage, `profile_images/${currentUser.uid}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser.id}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile_images')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile_images')
+        .getPublicUrl(filePath);
 
       // 2. Create User in ChatEngine
-      // Assuming we have the Private Key in env
       const chatEngineUser = {
         username: username,
-        secret: currentUser.uid, // Using UID as secret
+        secret: currentUser.id,
         email: currentUser.email,
-        first_name: currentUser.displayName ? currentUser.displayName.split(' ')[0] : username,
-        last_name: currentUser.displayName ? currentUser.displayName.split(' ')[1] || '' : '',
-        custom_json: { photoURL: downloadURL } // Store extra info if needed
+        first_name: username,
+        custom_json: { photoURL: publicUrl }
       };
 
       const privateKey = process.env.REACT_APP_CHAT_ENGINE_PRIVATE_KEY;
 
       if (!privateKey) {
-        // Fallback or warning if private key is missing - for now assuming user provides it.
-        // If no private key, we might try to just authenticate if the user exists, but this is "Onboarding"
-        // creating a NEW user.
-        console.warn("ChatEngine Private Key is missing. User creation on ChatEngine might fail.");
+          throw new Error("Missing REACT_APP_CHAT_ENGINE_PRIVATE_KEY");
       }
 
-      // Only attempt to create if we have the key, otherwise we might be in a dev env without it?
-      // Or we can try to proceed assuming the user might already be created manually?
-      // Strict requirement: Create user via API.
+      await axios.post(
+        'https://api.chatengine.io/users/',
+        chatEngineUser,
+        { headers: { 'Private-Key': privateKey } }
+      );
 
-      if (privateKey) {
-         await axios.post(
-          'https://api.chatengine.io/users/',
-          chatEngineUser,
-          { headers: { 'Private-Key': privateKey } }
-        );
-      } else {
-        throw new Error("Missing REACT_APP_CHAT_ENGINE_PRIVATE_KEY in environment variables.");
-      }
+      // 3. Create User Document in Supabase
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: currentUser.id,
+            username: username,
+            email: currentUser.email,
+            photo_url: publicUrl,
+            created_at: new Date().toISOString()
+          }
+        ]);
 
-      // 3. Create User Document in Firestore
-      await setDoc(doc(db, "users", currentUser.uid), {
-        username: username,
-        email: currentUser.email,
-        photoURL: downloadURL,
-        uid: currentUser.uid,
-        createdAt: new Date()
-      });
+      if (insertError) throw insertError;
 
-      // 4. Save to LocalStorage (as App.js uses it)
+      // 4. Save to LocalStorage
       localStorage.setItem('username', username);
-      localStorage.setItem('password', currentUser.uid); // Using UID as secret
+      localStorage.setItem('password', currentUser.id);
 
       // 5. Redirect
       navigate('/');

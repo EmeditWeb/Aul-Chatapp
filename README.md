@@ -1,11 +1,11 @@
 # Chat Application
 
-A real-time chat application built with React, Firebase, and React Chat Engine.
+A real-time chat application built with React, Supabase, and React Chat Engine.
 
 ## Features
 
 -   **Real-time Chat**: Powered by React Chat Engine.
--   **Authentication**: Google and GitHub Sign-In via Firebase Auth.
+-   **Authentication**: GitHub Sign-In via Supabase Auth.
 -   **User Onboarding**: Set username and profile picture.
 -   **Dark Mode**: Toggle between light and dark themes.
 -   **Responsive Design**: Works on desktop and mobile.
@@ -38,16 +38,20 @@ Create a `.env` file in the root directory based on `.env.example`:
 cp .env.example .env
 ```
 
-Update the `.env` file with your Firebase and Chat Engine credentials.
+Update the `.env` file with your Supabase and Chat Engine credentials.
 
-**Firebase Configuration:**
-1.  Go to [Firebase Console](https://console.firebase.google.com/).
+**Supabase Configuration:**
+1.  Go to [Supabase](https://supabase.com/).
 2.  Create a new project.
-3.  Add a Web App.
-4.  Copy the config values to your `.env` file (API Key, Auth Domain, etc.).
-5.  Enable **Authentication** (Google and GitHub providers).
-6.  Enable **Firestore Database**.
-7.  Enable **Storage**.
+3.  Go to **Authentication** > **Providers** and enable **GitHub**.
+4.  Go to **Table Editor** and create a `users` table in `public` schema with the following columns:
+    -   `id` (uuid, Primary Key, link to `auth.users.id`)
+    -   `username` (text)
+    -   `email` (text)
+    -   `photo_url` (text)
+    -   `created_at` (timestamptz)
+5.  Go to **Storage** and create a public bucket named `profile_images`.
+6.  Copy the **Project URL** and **Anon Key** to your `.env` file.
 
 **Chat Engine Configuration:**
 1.  Go to [Chat Engine](https://chatengine.io/).
@@ -55,12 +59,8 @@ Update the `.env` file with your Firebase and Chat Engine credentials.
 3.  Copy the **Project ID** and **Private Key** to your `.env` file.
 
 **Required Environment Variables:**
-- `REACT_APP_FIREBASE_API_KEY`
-- `REACT_APP_FIREBASE_AUTH_DOMAIN`
-- `REACT_APP_FIREBASE_PROJECT_ID`
-- `REACT_APP_FIREBASE_STORAGE_BUCKET`
-- `REACT_APP_FIREBASE_MESSAGING_SENDER_ID`
-- `REACT_APP_FIREBASE_APP_ID`
+- `REACT_APP_SUPABASE_URL`
+- `REACT_APP_SUPABASE_ANON_KEY`
 - `REACT_APP_CHAT_ENGINE_PROJECT_ID`
 - `REACT_APP_CHAT_ENGINE_PRIVATE_KEY`
 
@@ -115,7 +115,7 @@ This creates a `build` folder with optimized static files.
 
 -   `src/component`: React components (ChatFeed, LoginForm, Onboarding, etc.).
 -   `src/contexts`: Context providers (AuthContext, ThemeContext).
--   `src/firebase.js`: Firebase initialization.
+-   `src/supabaseClient.js`: Supabase initialization.
 -   `src/App.js`: Main application component with routing.
 
 ## License

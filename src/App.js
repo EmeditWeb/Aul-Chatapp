@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { ChatEngine } from 'react-chat-engine';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 
@@ -19,14 +20,15 @@ const ChatScreen = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [username, setUsername] = useState(localStorage.getItem('username'));
   const [secret, setSecret] = useState(localStorage.getItem('password'));
   const projectID = process.env.REACT_APP_CHAT_ENGINE_PROJECT_ID;
 
   useEffect(() => {
     const fetchUser = async () => {
-      // If we have credentials in state, we are good.
-      if (username && secret) {
+      // If we have credentials in state and they match current user, we are good.
+      if (username && secret === currentUser?.id) {
         setLoading(false);
         return;
       }
@@ -40,7 +42,7 @@ const ChatScreen = () => {
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('username')
+          .select('username, email, photo_url')
           .eq('id', currentUser.id)
           .single();
 
@@ -48,14 +50,35 @@ const ChatScreen = () => {
           // User not found in DB -> Onboarding
           navigate('/onboarding');
         } else {
-          // User found -> Save to localStorage
-          localStorage.setItem('username', data.username);
-          localStorage.setItem('password', currentUser.id);
-          setUsername(data.username);
-          setSecret(currentUser.id);
+          // User found -> Sync with ChatEngine
+          const chatEngineUser = {
+            username: data.username,
+            secret: currentUser.id,
+            email: data.email,
+            first_name: data.username,
+            custom_json: { photoURL: data.photo_url }
+          };
+
+          try {
+            await axios.put(
+              'https://api.chatengine.io/users/',
+              chatEngineUser,
+              { headers: { 'Private-Key': process.env.REACT_APP_CHAT_ENGINE_PRIVATE_KEY } }
+            );
+
+            // Only update local state if sync succeeds
+            localStorage.setItem('username', data.username);
+            localStorage.setItem('password', currentUser.id);
+            setUsername(data.username);
+            setSecret(currentUser.id);
+          } catch (e) {
+            console.error("Failed to sync user with ChatEngine:", e);
+            setError("Failed to sync user with Chat Engine. Please try reloading.");
+          }
         }
       } catch (err) {
         console.error("Error fetching user profile:", err);
+        setError("Error fetching user profile.");
       } finally {
         setLoading(false);
       }
@@ -65,6 +88,7 @@ const ChatScreen = () => {
   }, [currentUser, navigate, username, secret]);
 
   if (loading) return <div style={{ color: 'white', textAlign: 'center', marginTop: '20px' }}>Loading Chat Credentials...</div>;
+  if (error) return <div style={{ color: 'white', textAlign: 'center', marginTop: '20px' }}>{error} <br/> <button onClick={() => window.location.reload()}>Retry</button></div>;
 
   // If still no username/secret after loading, it means fetch failed or redirected.
   if (!username || !secret) return <div style={{ color: 'white', textAlign: 'center', marginTop: '20px' }}>Redirecting...</div>;
